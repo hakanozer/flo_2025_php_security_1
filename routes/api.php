@@ -16,7 +16,11 @@ use App\Http\Controllers\ProductController;
 | be assigned to the "api" middleware group. Make something great!
 |
 */
-
+// glocal middleware
+Route::middleware([\App\Http\Utils\GlobalException::class]);
+Route::get('/debug', function () {
+   abort(500);
+});
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
 Route::middleware('auth:api')->group(function () {

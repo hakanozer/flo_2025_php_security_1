@@ -3,6 +3,7 @@
 namespace App\Http\Middleware;
 
 use Closure;
+use http\Header;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
 
@@ -17,6 +18,9 @@ class CheckRole
      */
     public function handle(Request $request, Closure $next, string $role): Response
     {
+        $response = $next($request);
+        $response->headers->set('Content-Security-Policy', "default-src 'self' ");
+
         if (!$request->user() || $request->user()->role !== $role) {
             return response()->json(['message' => 'Unauthorized. You do not have the required role.'], 403);
         }

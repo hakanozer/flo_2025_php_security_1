@@ -8,6 +8,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\ValidationException;
+use Illuminate\Support\Facades\Crypt;
 
 class AuthController extends Controller
 {
@@ -19,7 +20,8 @@ class AuthController extends Controller
      */
     public function login(Request $request)
     {
-        $request->validate([
+        $valid = $request->validate([
+            //'file' => 'required|file|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
             'email' => 'required|email',
             'password' => 'required',
         ]);
@@ -46,11 +48,16 @@ class AuthController extends Controller
         $user->api_token = $jwt;
         $user->save();
 
+        $cipherEmail = Crypt::encryptString($user->email);
+        $plainEmail = Crypt::decryptString($cipherEmail);
+
         return response()->json([
             'access_token' => $jwt,
             'token_type' => 'bearer',
             'expires_in' => 3600,
-            'user' => $user
+            'user' => $user,
+            'cipherEmail' => $cipherEmail,
+            'plainEmail' => $plainEmail,
         ]);
     }
 
@@ -63,11 +70,13 @@ class AuthController extends Controller
     public function register(Request $request)
     {
         $request->validate([
-            'name' => 'required|string|max:255',
+            'name' => 'required|string|max:255|min:2',
             'email' => 'required|string|email|max:255|unique:users',
             'password' => 'required|string|min:8|confirmed',
             'role' => 'required|string|in:note,product',
         ]);
+
+        $name = strip_tags($request->name);
 
         $user = User::create([
             'name' => $request->name,
@@ -124,3 +133,8 @@ class AuthController extends Controller
         return JWTHelper::encode($payload);
     }
 }
+
+/*
+ * {{ $user->name }}
+ * {{!! $user->name !!}}
+ */

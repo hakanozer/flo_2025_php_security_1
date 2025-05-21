@@ -40,35 +40,31 @@ class JWTGuard implements Guard
      */
     public function user()
     {
+        // Return cached user if available
         if ($this->user !== null) {
             return $this->user;
         }
 
+        $result = null;
         $token = $this->getTokenForRequest();
 
-        if (empty($token)) {
-            return null;
+        if (!empty($token)) {
+            $payload = JWTHelper::decode($token);
+
+            if ($payload !== null) {
+                $id = $payload['sub'] ?? null;
+
+                if ($id !== null) {
+                    $user = User::find($id);
+
+                    if ($user && $user->api_token === $token) {
+                        $this->user = $user;
+                        $result = $this->user;
+                    }
+                }
+            }
         }
-
-        $payload = JWTHelper::decode($token);
-
-        if ($payload === null) {
-            return null;
-        }
-
-        $id = $payload['sub'] ?? null;
-
-        if ($id === null) {
-            return null;
-        }
-
-        $user = User::find($id);
-
-        if ($user && $user->api_token === $token) {
-            return $this->user = $user;
-        }
-
-        return null;
+        return $result;
     }
 
     /**

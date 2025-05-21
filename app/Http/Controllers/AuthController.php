@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\User;
 use App\Helpers\JWTHelper;
+use App\Http\Utils\GlobalException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
@@ -20,6 +21,7 @@ class AuthController extends Controller
      */
     public function login(Request $request)
     {
+
         $valid = $request->validate([
             //'file' => 'required|file|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
             'email' => 'required|email',
@@ -29,9 +31,7 @@ class AuthController extends Controller
         $user = User::where('email', $request->email)->first();
 
         if (! $user || ! Hash::check($request->password, $user->password)) {
-            throw ValidationException::withMessages([
-                'email' => ['The provided credentials are incorrect.'],
-            ]);
+            throw new GlobalException('Geçersiz kimlik bilgileri', 401);
         }
 
         // Create JWT token

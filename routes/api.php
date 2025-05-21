@@ -16,13 +16,16 @@ use App\Http\Controllers\ProductController;
 | be assigned to the "api" middleware group. Make something great!
 |
 */
-// glocal middleware
-Route::middleware([\App\Http\Utils\GlobalException::class]);
+// Debug route
 Route::get('/debug', function () {
    abort(500);
 });
-Route::post('/register', [AuthController::class, 'register']);
-Route::post('/login', [AuthController::class, 'login']);
+
+// Auth routes with rate limiting
+Route::middleware(['throttle:auth'])->group(function () {
+    Route::post('/register', [AuthController::class, 'register']);
+    Route::post('/login', [AuthController::class, 'login']);
+});
 Route::middleware('auth:api')->group(function () {
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::get('/user', function (Request $request) {
@@ -30,12 +33,12 @@ Route::middleware('auth:api')->group(function () {
     });
 
     // Note routes - only accessible to users with 'note' role
-    Route::middleware(\App\Http\Middleware\CheckRole::class . ':note')->group(function () {
+    Route::middleware([\App\Http\Middleware\CheckRole::class . ':note', 'throttle:notes'])->group(function () {
         Route::apiResource('notes', NoteController::class);
     });
 
     // Product routes - only accessible to users with 'product' role
-    Route::middleware(\App\Http\Middleware\CheckRole::class . ':product')->group(function () {
+    Route::middleware([\App\Http\Middleware\CheckRole::class . ':product', 'throttle:products'])->group(function () {
         Route::apiResource('products', ProductController::class);
     });
 });

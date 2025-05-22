@@ -7,9 +7,11 @@ use App\Helpers\JWTHelper;
 use App\Http\Utils\GlobalException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Validation\ValidationException;
 use Illuminate\Support\Facades\Crypt;
+use Illuminate\Support\Facades\Validator;
+use mysql_xdevapi\Exception;
 
 class AuthController extends Controller
 {
@@ -21,6 +23,7 @@ class AuthController extends Controller
      */
     public function login(Request $request)
     {
+        // $sessionToken = $request->session()->token();
 
         $valid = $request->validate([
             //'file' => 'required|file|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
@@ -32,6 +35,12 @@ class AuthController extends Controller
 
         if (! $user || ! Hash::check($request->password, $user->password)) {
             throw new GlobalException('Geçersiz kimlik bilgileri', 401);
+        }
+
+        try {
+
+        }catch (Exception $exception){
+            throw new GlobalException($exception, 401);
         }
 
         // Create JWT token
@@ -51,6 +60,10 @@ class AuthController extends Controller
         $cipherEmail = Crypt::encryptString($user->email);
         $plainEmail = Crypt::decryptString($cipherEmail);
 
+        $newEncrypter = new \Illuminate\Encryption\Encrypter( Config::get('app.customKey') );
+        $encrypted = $newEncrypter->encrypt( $user->email );
+        $decrypted = $newEncrypter->decrypt( $encrypted );
+
         return response()->json([
             'access_token' => $jwt,
             'token_type' => 'bearer',
@@ -58,6 +71,9 @@ class AuthController extends Controller
             'user' => $user,
             'cipherEmail' => $cipherEmail,
             'plainEmail' => $plainEmail,
+            'encrypted' => $encrypted,
+            'decrypted'=> $decrypted,
+            //'sessionToken' => $sessionToken,
         ]);
     }
 
@@ -69,12 +85,18 @@ class AuthController extends Controller
      */
     public function register(Request $request)
     {
-        $request->validate([
+        $valid = Validator::make($request->all(), [
             'name' => 'required|string|max:255|min:2',
             'email' => 'required|string|email|max:255|unique:users',
             'password' => 'required|string|min:8|confirmed',
             'role' => 'required|string|in:note,product',
         ]);
+
+        if ( $valid->fails() ) {
+            return response()->json([
+                'errors' => $valid->errors()
+            ], 400);
+        }
 
         $name = strip_tags($request->name);
 
@@ -137,4 +159,6 @@ class AuthController extends Controller
 /*
  * {{ $user->name }}
  * {{!! $user->name !!}}
+ * ' or 1 = 1 --
+ * select * from users where email = 'a@a.com' and password = '' or 1 = 1; delete from users --'
  */

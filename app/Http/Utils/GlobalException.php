@@ -9,6 +9,7 @@ class GlobalException extends \Exception
 
     public function __construct(?string $message = null, int $code = 0, ?\Throwable $previous = null)
     {
+        $this->code = $code;
         parent::__construct($message ?? $this->message, $this->code, $previous);
     }
 

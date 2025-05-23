@@ -37,11 +37,14 @@ class AuthController extends Controller
             throw new GlobalException('Geçersiz kimlik bilgileri', 401);
         }
 
-        try {
-
-        }catch (Exception $exception){
-            throw new GlobalException($exception, 401);
-        }
+//        try {
+//            $a = 1;
+//            $b = 0;
+//            $num = $a / $b;
+//            dd($num);
+//        }catch (Exception $exception){
+//            throw new GlobalException($exception, 401);
+//        }
 
         // Create JWT token
         $payload = [

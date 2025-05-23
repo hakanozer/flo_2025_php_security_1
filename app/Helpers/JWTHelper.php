@@ -33,9 +33,10 @@ class JWTHelper
      */
     public static function decode(string $jwt): ?array
     {
+        $result = null;
         $parts = explode('.', $jwt);
         if (count($parts) !== 3) {
-            return null;
+            $result = null;
         }
 
         list($base64UrlHeader, $base64UrlPayload, $base64UrlSignature) = $parts;
@@ -44,17 +45,17 @@ class JWTHelper
         $expectedSignature = self::sign($base64UrlHeader . '.' . $base64UrlPayload, env('JWT_SECRET', 'default_secret_key'));
 
         if (!hash_equals($signature, $expectedSignature)) {
-            return null;
+            $result = null;
         }
 
-        $payload = json_decode(self::base64UrlDecode($base64UrlPayload), true);
+        $result = json_decode(self::base64UrlDecode($base64UrlPayload), true);
 
         // Check if token is expired
         if (isset($payload['exp']) && $payload['exp'] < time()) {
-            return null;
+            $result = null;
         }
 
-        return $payload;
+        return $result;
     }
 
     /**
